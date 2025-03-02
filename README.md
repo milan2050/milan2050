@@ -1,12 +1,37 @@
-- 👋 Hi, I’m @milan2050
-- 👀 I’m interested in ...
-- 🌱 I’m currently learning ...
-- 💞️ I’m looking to collaborate on ...
-- 📫 How to reach me ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
+# Nepali-English-Date-Converter
 
-<!---
-milan2050/milan2050 is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-You can click the Preview link to take a look at your changes.
---->
+## Installation
+```bash
+npm i nepali-english-date-converter
+```
+## Usage
+```python
+import {NepaliToEnglishDateConverter} from 'nepali-english-date-converter';
+or
+const {NepaliToEnglishDateConverter, EnglishToNepaliDateConverter} = require('nepali-english-date-converter');
+
+let englishDate = EnglishToNepaliDateConverter(2023,12,13);
+console.log("🚀 ~ file: script.js:4 ~ a:", englishDate);
+let nepaliDate = NepaliToEnglishDateConverter(2080,8,27);
+console.log("🚀 ~ file: script.js:6 ~ b:", nepaliDate);
+```
+## Output
+```python
+{
+  year: '२०८०',
+  month: '८',
+  date: '२७',
+  weekDay: '४',
+  dayName: 'बुधवार',
+  monthName: 'मंसिर'
+}
+{
+  englishYear: 2023,
+  englishMonth: 12,
+  englishDate: 13,
+  weekDay: 4,
+  month: 12,
+  dayName: 'Wednesday',
+  monthName: 'December'
+}
+```
