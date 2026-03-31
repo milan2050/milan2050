@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Nepal - Earn to Grow</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <style>
+        :root { --primary: #6c5ce7; --secondary: #00b894; --danger: #ff7675; --dark: #2d3436; --bg: #f4f7f6; }
+        body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: #333; overflow-x: hidden; }
+        .box { background: white; padding: 20px; margin: 15px auto; width: 90%; max-width: 480px; border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); box-sizing: border-box; }
+        
+        /* Logo Styling */
+        .logo-container { text-align: center; margin-bottom: 10px; }
+        .app-logo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); padding: 2px; }
+
+        input { width: 100%; padding: 14px; margin-top: 12px; border: 1.5px solid #eee; border-radius: 14px; box-sizing: border-box; outline: none; font-size: 16px; }
+        button { padding: 15px; border: none; border-radius: 14px; width: 100%; margin-top: 12px; cursor: pointer; font-weight: 700; transition: 0.3s; font-size: 14px; }
+        button:active { transform: scale(0.97); }
+        .loginBtn { background: var(--secondary); color: #fff; }
+        .signupBtn { background: var(--primary); color: #fff; }
+        .hidden { display: none; }
+        
+        .nav { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #eee; }
+        .video-wrapper { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 18px; overflow: hidden; }
+        #player { width: 100%; height: 100%; border: none; }
+        
+        .status-display { background: #e8f4fd; color: #0984e3; padding: 15px; border-radius: 15px; margin: 15px 0; font-size: 16px; text-align: center; font-weight: bold; }
+        .channel-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f9f9f9; }
+        .sub-btn { width: auto; padding: 8px 15px; background: #ff0000; color: white; border-radius: 8px; font-size: 12px; margin: 0; }
+        #customAlert { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--dark); color: #fff; padding: 12px 24px; border-radius: 50px; z-index: 10000; display: none; width: max-content; max-width: 90%; text-align: center; }
+
+        /* Referral Modal/Box */
+        #refContent { margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.3); }
+        .action-btns { display: flex; gap: 10px; margin-top: 10px; }
+        .ref-btn { background: #6c5ce7; color: white; margin-top: 0; }
+    </style>
+</head>
+<body>
+
+<div id="customAlert"></div>
+
+<div id="authBox" class="box" style="margin-top: 40px;">
+    <div class="logo-container">
+        <img src="https://lh3.googleusercontent.com/d/1EKMCogp2dPldecMhtD86RgTr0vvLeEut" alt="Logo" class="app-logo">
+    </div>
+    <h2 style="text-align:center; color: var(--primary); margin-top: 5px;">Open Nepal</h2>
+    <div id="loginSection">
+        <input type="email" id="email" placeholder="Email Address">
+        <input type="password" id="password" placeholder="Password">
+        <button class="loginBtn" onclick="login()">Login</button>
+        <button onclick="showSignup()" style="background:none; color: var(--primary);">Create New Account</button>
+    </div>
+    <div id="signupFields" class="hidden">
+        <input type="text" id="signupName" placeholder="Full Name">
+        <input type="email" id="signupEmail" placeholder="Email Address">
+        <input type="password" id="signupPassword" placeholder="Create Password">
+        <input type="text" id="signupRef" placeholder="Referral Code (Optional)">
+        <button class="signupBtn" onclick="signup()">Register Now</button>
+        <button style="background:none; color: #777;" onclick="showSignup()">Back</button>
+    </div>
+</div>
+
+<div id="home" class="hidden">
+    <div class="nav">
+        <span>👤 <b id="username">...</b></span>
+        <span>💰 <b id="coins">0</b> Coins</span>
+    </div>
+
+    <div class="box" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white;">
+        <button onclick="toggleReferral()" style="background: white; color: var(--primary); margin: 0;">🎁 Refer & Earn Rewards</button>
+        <div id="refContent" class="hidden" style="text-align: center;">
+            <p style="margin:0; font-size:12px;">Your Referral Code:</p>
+            <h3 id="refCodeDisplay" style="margin:10px 0; letter-spacing: 2px;">...</h3>
+            <div class="action-btns">
+                <button onclick="copyRef()" style="background: white; color: var(--primary); flex: 1; margin:0;">Copy Code</button>
+                <button onclick="shareRef()" style="background: var(--secondary); color: white; flex: 1; margin:0;">Share Code</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="box">
+        <h3 style="margin-top:0; color: var(--primary);">Watch & Earn (1s = 1 Coin)</h3>
+        <div class="video-wrapper"><div id="player"></div></div>
+        <div id="timerMsg" class="status-display">Play video to earn</div>
+        <button onclick="loadContent()" style="background:#f1f2f6; color:#999; font-size:12px;">Skip Video</button>
+    </div>
+
+    <div class="box">
+        <div style="display: flex; gap: 10px;">
+            <button onclick="toggleVideo()" style="background:#ebf5ff; color:#0984e3; flex:1; margin-top:0;">Add Video (100C)</button>
+            <button onclick="toggleChannel()" style="background:#fff4e6; color:#e67e22; flex:1; margin-top:0;">Add Channel (200C)</button>
+        </div>
+        <div id="videoBox" class="hidden">
+            <input type="text" id="videoUrl" placeholder="YouTube Video Link">
+            <button class="loginBtn" onclick="addVideo()">Submit Video</button>
+        </div>
+        <div id="channelBox" class="hidden">
+            <input type="text" id="chName" placeholder="Channel Name">
+            <input type="text" id="chUrl" placeholder="Channel Link">
+            <button class="loginBtn" onclick="addChannel()">Submit Channel</button>
+        </div>
+    </div>
+
+    <div class="box">
+        <h3 style="margin-top:0;">Subscribe & Earn (100C)</h3>
+        <div id="channelList"></div>
+    </div>
+
+    <button onclick="logout()" style="background:none; color:var(--danger); margin: 20px auto; display: block; width: auto;">Logout</button>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDnuw-707NQ1LKEX1X4uEDVLL5yveobu-Y",
+        authDomain: "open-nepal-earn-to-grow.firebaseapp.com",
+        databaseURL: "https://open-nepal-earn-to-grow-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "open-nepal-earn-to-grow",
+        storageBucket: "open-nepal-earn-to-grow.firebasestorage.app",
+        messagingSenderId: "235834177721",
+        appId: "1:235834177721:web:d60973b061a1bb94cf4368"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+    let currentUid = null, ytPlayer, earnInterval, sessionCoins = 0;
+
+    function myAlert(msg) {
+        let box = document.getElementById('customAlert');
+        box.innerText = msg; box.style.display = 'block';
+        setTimeout(() => { box.style.display = 'none'; }, 3000);
+    }
+
+    function onYouTubeIframeAPIReady() {
+        ytPlayer = new YT.Player('player', {
+            height: '100%', width: '100%',
+            playerVars: { 'autoplay': 0, 'rel': 0, 'modestbranding': 1, 'enablejsapi': 1 },
+            events: { 'onStateChange': onPlayerStateChange }
+        });
+    }
+
+    function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING) {
+            clearInterval(earnInterval);
+            earnInterval = setInterval(() => {
+                sessionCoins++;
+                document.getElementById('timerMsg').innerText = "Earning: " + sessionCoins + " Coins";
+                db.ref('users/' + currentUid + '/coins').transaction(c => (c || 0) + 1);
+            }, 1000);
+        } else {
+            clearInterval(earnInterval);
+            if (event.data == YT.PlayerState.ENDED) {
+                myAlert("Finished! Loading next...");
+                setTimeout(loadContent, 2000);
+            } else {
+                document.getElementById('timerMsg').innerText = "Paused! Play to earn.";
+            }
+        }
+    }
+
+    function loadContent() {
+        sessionCoins = 0;
+        document.getElementById('timerMsg').innerText = "Play video to earn";
+        db.ref('videos').once('value', snap => {
+            let list = [];
+            snap.forEach(v => list.push(v.val().url));
+            if(list.length > 0) {
+                let id = extractId(list[Math.floor(Math.random() * list.length)]);
+                if(ytPlayer && ytPlayer.loadVideoById) ytPlayer.loadVideoById(id);
+            }
+        });
+        db.ref('channels').limitToLast(5).once('value', s => {
+            let h = "";
+            s.forEach(c => { h += `<div class="channel-item"><b>${c.val().name}</b><button class="sub-btn" onclick="sub('${c.val().url}')">Subscribe</button></div>`; });
+            document.getElementById('channelList').innerHTML = h;
+        });
+    }
+
+    function extractId(url) {
+        let id = "";
+        if (url.includes('v=')) id = url.split('v=')[1].split('&')[0];
+        else if (url.includes('youtu.be/')) id = url.split('youtu.be/')[1].split('?')[0];
+        else if (url.includes('/shorts/')) id = url.split('/shorts/')[1].split('?')[0];
+        return id;
+    }
+
+    auth.onAuthStateChanged(user => { 
+        if (user) {
+            currentUid = user.uid;
+            db.ref('users/' + user.uid).on('value', s => {
+                let d = s.val();
+                if(d) {
+                    document.getElementById('username').innerText = d.name;
+                    document.getElementById('coins').innerText = d.coins;
+                    document.getElementById('refCodeDisplay').innerText = d.refCode || "NOCODE";
+                    document.getElementById('authBox').classList.add('hidden');
+                    document.getElementById('home').classList.remove('hidden');
+                    if(!ytPlayer) setTimeout(loadContent, 2000); else if(sessionCoins == 0) loadContent();
+                }
+            });
+        }
+    });
+
+    function login() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => myAlert("Login Error")); }
+    
+    function signup() {
+        let n = document.getElementById('signupName').value, e = document.getElementById('signupEmail').value, p = document.getElementById('signupPassword').value, r = document.getElementById('signupRef').value;
+        if(!n || !e || !p) return myAlert("Please fill all fields");
+        auth.createUserWithEmailAndPassword(e, p).then(res => {
+            let code = res.user.uid.slice(0,6).toUpperCase();
+            db.ref('users/' + res.user.uid).set({ name: n, coins: 100, refCode: code }).then(() => {
+                if(r) {
+                    db.ref('users').once('value', s => { 
+                        s.forEach(u => { if(u.val().refCode == r) db.ref('users/' + u.key + '/coins').transaction(c => c + 500); });
+                    });
+                }
+                location.reload();
+            });
+        }).catch(err => myAlert(err.message));
+    }
+
+    function addVideo() {
+        let u = document.getElementById('videoUrl').value;
+        if(!u) return myAlert("Enter Link");
+        db.ref('users/' + currentUid + '/coins').once('value', s => {
+            if(s.val() < 100) return myAlert("Need 100 Coins");
+            db.ref('videos').push({ url: u }).then(() => {
+                db.ref('users/' + currentUid + '/coins').set(s.val() - 100);
+                myAlert("Video Promoted!");
+                document.getElementById('videoUrl').value = "";
+            });
+        });
+    }
+
+    function addChannel() {
+        let n = document.getElementById('chName').value, u = document.getElementById('chUrl').value;
+        if(!n || !u) return myAlert("Fill all fields");
+        db.ref('users/' + currentUid + '/coins').once('value', s => {
+            if(s.val() < 200) return myAlert("Need 200 Coins");
+            db.ref('channels').push({ name: n, url: u }).then(() => {
+                db.ref('users/' + currentUid + '/coins').set(s.val() - 200);
+                myAlert("Channel Promoted!");
+                document.getElementById('chName').value = ""; document.getElementById('chUrl').value = "";
+            });
+        });
+    }
+
+    function sub(url) { window.open(url); db.ref('users/' + currentUid + '/coins').transaction(c => c + 100); myAlert("100 Coins Added"); }
+    
+    // New Functions
+    function toggleReferral() { document.getElementById('refContent').classList.toggle('hidden'); }
+    function copyRef() { navigator.clipboard.writeText(document.getElementById('refCodeDisplay').innerText); myAlert("Code Copied!"); }
+    function shareRef() {
+        const code = document.getElementById('refCodeDisplay').innerText;
+        const text = `Join SmartNep and earn coins! Use my referral code: ${code}`;
+        if (navigator.share) {
+            navigator.share({ title: 'SmartNep', text: text, url: window.location.href }).catch(() => {});
+        } else {
+            myAlert("Sharing not supported on this browser.");
+        }
+    }
+
+    function logout() { auth.signOut().then(() => location.reload()); }
+    function showSignup() { document.getElementById('signupFields').classList.toggle('hidden'); document.getElementById('loginSection').classList.toggle('hidden'); }
+    function toggleVideo() { document.getElementById('videoBox').classList.toggle('hidden'); document.getElementById('channelBox').classList.add('hidden'); }
+    function toggleChannel() { document.getElementById('channelBox').classList.toggle('hidden'); document.getElementById('videoBox').classList.add('hidden'); }
+</script>
+</body>
+</html>
